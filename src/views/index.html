@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VINOTHÈQUE - Vins d'exception</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes gradient-pulse {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .animate-text-gradient-pulse {
+            background-size: 200% auto;
+            animation: gradient-pulse 3s linear infinite;
+        }
+
+        /* Classes pour la modale et le panier latéral */
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        .sidebar {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-black text-white overflow-x-hidden font-sans">
+    <nav class="fixed top-8 left-1/2 -translate-x-1/2 z-40 bg-black/20 backdrop-blur-xl border border-white/10 rounded-full px-8 py-4">
+        <div class="flex items-center space-x-8">
+            <div class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-amber-400"><path d="M11 22h2c3.31 0 6-2.69 6-6v-3a4 4 0 0 0-4-4h-2V7.5a2.5 2.5 0 0 1 5 0V6"/><path d="M11 15V9.5a2.5 2.5 0 0 0-5 0V15"/><path d="M2 22h2c3.31 0 6-2.69 6-6v-3a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v3c0 3.31 2.69 6 6 6z"/><path d="M12 2L12 6"/></svg>
+                <span class="font-bold text-lg bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">
+                    VINOTHÈQUE
+                </span>
+            </div>
+            
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="text-white/70 hover:text-amber-400 transition-colors text-sm font-medium">Collection</a>
+                <a href="#" class="text-white/70 hover:text-amber-400 transition-colors text-sm font-medium">Terroirs</a>
+                <a href="#" class="text-white/70 hover:text-amber-400 transition-colors text-sm font-medium">Expérience</a>
+            </div>
+            
+            <button
+                id="cart-button"
+                class="relative p-2 text-white/70 hover:text-amber-400 transition-colors group"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <span id="cart-items-count" class="absolute -top-1 -right-1 bg-gradient-to-r from-amber-400 to-red-500 text-black text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold hidden">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <section id="hero-section" class="relative h-screen flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-gradient-to-br from-red-900/20 via-black to-amber-900/20"></div>
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-red-500/10 to-amber-500/10 rounded-full blur-3xl animate-pulse"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-amber-500/10 to-red-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
+        <div class="absolute inset-0 overflow-hidden z-0" id="floating-elements-container"></div>
+
+        <div class="relative z-10 text-center max-w-6xl mx-auto px-4">
+            <div class="mb-8">
+                <h1 class="text-8xl md:text-9xl font-black mb-6 leading-none">
+                    <span class="bg-gradient-to-r from-amber-400 via-red-500 to-amber-400 bg-clip-text text-transparent animate-text-gradient-pulse">
+                        VINS
+                    </span>
+                    <br />
+                    <span class="text-white/90 text-6xl md:text-7xl font-light italic">
+                        d'exception
+                    </span>
+                </h1>
+            </div>
+            
+            <p class="text-xl md:text-2xl text-white/70 mb-12 max-w-3xl mx-auto leading-relaxed">
+                Une odyssée sensorielle à travers les terroirs les plus prestigieux de France
+            </p>
+            
+            <button
+                id="discover-collection-button"
+                class="group relative px-12 py-6 bg-gradient-to-r from-amber-400 to-red-500 text-black font-bold text-lg rounded-full overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/25"
+            >
+                <span class="relative z-10 flex items-center space-x-2">
+                    <span>Découvrir la Collection</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </span>
+                <div class="absolute inset-0 bg-gradient-to-r from-red-500 to-amber-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </button>
+        </div>
+    </section>
+
+    <section class="relative py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                <div class="lg:col-span-2">
+                    <div class="relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-amber-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="Rechercher par nom, région, millésime..."
+                            class="w-full pl-16 pr-6 py-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl text-white placeholder-white/50 text-lg focus:outline-none focus:border-amber-400/50 focus:bg-white/10 transition-all duration-300"
+                        />
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-amber-400"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    <select
+                        id="filter-type-select"
+                        class="w-full pl-16 pr-6 py-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl text-white text-lg focus:outline-none focus:border-amber-400/50 focus:bg-white/10 transition-all duration-300 appearance-none cursor-pointer"
+                    >
+                        <option value="Tous" class="bg-black">Tous les types</option>
+                        <option value="Rouge" class="bg-black">Rouge</option>
+                        <option value="Blanc" class="bg-black">Blanc</option>
+                        <option value="Effervescent" class="bg-black">Effervescent</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="catalog-section" class="relative py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-5xl md:text-6xl font-black mb-6">
+                    <span class="bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">
+                        COLLECTION
+                    </span>
+                </h2>
+                <p class="text-xl text-white/70 max-w-2xl mx-auto">
+                    Chaque bouteille raconte une histoire, chaque gorgée révèle un terroir
+                </p>
+            </div>
+
+            <div id="vins-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <p class="text-white/70 text-center py-4">Chargement des vins...</p>
+            </div>
+        </div>
+    </section>
+
+        <section id="add-wine-section" class="relative py-20 px-4 bg-black/5">
+        <div class="max-w-3xl mx-auto p-8 bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-xl rounded-3xl border border-white/10 shadow-lg">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-black mb-4">
+                    <span class="bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">
+                        Ajouter un nouveau Vin
+                    </span>
+                </h2>
+                <p class="text-white/70 text-lg">
+                    Remplissez les informations pour ajouter une nouvelle bouteille à votre collection.
+                </p>
+            </div>
+
+            <form id="add-wine-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-1">
+                    <label for="wine-name" class="block text-white/70 text-sm font-bold mb-2">Nom du Vin <span class="text-red-500">*</span></label>
+                    <input type="text" id="wine-name" name="nom" required
+                           class="w-full px-4 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-amber-400/50 focus:bg-white/10 transition-all duration-300"
+                           placeholder="Ex: Château Margaux">
+                </div>
+
+                <div class="md:col-span-1">
+                    <label for="wine-cepage" class="block text-white/70 text-sm font-bold mb-2">Cépage <span class="text-red-500">*</span></label>
+                    <input type="text" id="wine-cepage" name="cepage" required
+                           class="w-full px-4 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-amber-400/50 focus:bg-white/10 transition-all duration-300"
+                           placeholder="Ex: Cabernet Sauvignon">
+                </div>
+
+                <div class="md:col-span-1">
+                    <label for="wine-year" class="block text-white/70 text-sm font-bold mb-2">Année <span class="text-red-500">*</span></label>
+                    <input type="number" id="wine-year" name="annee" required min="1900" max="2099"
+                           class="w-full px-4 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-amber-400/50 focus:bg-white/10 transition-all duration-300"
+                           placeholder="Ex: 2020">
+                </div>
+
+                <div class="md:col-span-1">
+                    <label for="wine-price" class="block text-white/70 text-sm font-bold mb-2">Prix (€) <span class="text-red-500">*</span></label>
+                    <input type="number" id="wine-price" name="prix" required step="0.01" min="0"
+                           class="w-full px-4 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-amber-400/50 focus:bg-white/10 transition-all duration-300"
+                           placeholder="Ex: 59.99">
+                </div>
+
+                <div class="md:col-span-1">
+                    <label for="wine-stock" class="block text-white/70 text-sm font-bold mb-2">Quantité en Stock <span class="text-red-500">*</span></label>
+                    <input type="number" id="wine-stock" name="quantiteStock" required min="0"
+                           class="w-full px-4 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-amber-400/50 focus:bg-white/10 transition-all duration-300"
+                           placeholder="Ex: 100">
+                </div>
+
+                <div class="md:col-span-1">
+                    <label for="wine-image-type" class="block text-white/70 text-sm font-bold mb-2">Type pour Image Générique</label>
+                    <select id="wine-image-type" name="imageType"
+                            class="w-full px-4 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg text-white focus:outline-none focus:border-amber-400/50 focus:bg-white/10 transition-all duration-300 appearance-none cursor-pointer">
+                        <option value="rouge" class="bg-black">Rouge</option>
+                        <option value="blanc" class="bg-black">Blanc</option>
+                        <option value="effervescent" class="bg-black">Effervescent</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="wine-description" class="block text-white/70 text-sm font-bold mb-2">Description</label>
+                    <textarea id="wine-description" name="description" rows="4"
+                              class="w-full px-4 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-amber-400/50 focus:bg-white/10 transition-all duration-300 resize-y"
+                              placeholder="Décrivez ce vin..."></textarea>
+                </div>
+                
+                <div class="md:col-span-2 text-center mt-6">
+                    <button type="submit" id="submit-wine-button"
+                            class="group relative px-10 py-4 bg-gradient-to-r from-amber-400 to-red-500 text-black font-bold text-lg rounded-full overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/25">
+                        <span class="relative z-10 flex items-center justify-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                            <span>Ajouter le Vin</span>
+                        </span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-red-500 to-amber-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </button>
+                    <p id="add-wine-message" class="mt-4 text-sm font-medium"></p>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <div id="wine-detail-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-2xl rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white/20" id="wine-detail-content">
+            </div>
+    </div>
+
+    <div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full max-w-lg bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-2xl border-l border-white/20 transform translate-x-full transition-transform duration-300 z-50 flex flex-col">
+        <div class="flex items-center justify-between p-8 border-b border-white/20">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Panier</h2>
+                <p id="cart-item-count-text" class="text-white/60">0 article</p>
+            </div>
+            <button id="close-cart-button" class="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-all duration-300 border border-white/20">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-white"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+        </div>
+        
+        <div id="cart-items-container" class="flex-1 overflow-y-auto p-8 space-y-6">
+            <div class="text-center py-16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-16 w-16 text-white/30 mx-auto mb-4"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <p class="text-white/50 text-lg">Votre panier est vide</p>
+            </div>
+        </div>
+        
+        <div id="cart-summary" class="border-t border-white/20 p-8 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <span class="text-xl font-bold text-white">Total</span>
+                <span id="cart-total-price" class="text-3xl font-bold bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">0.00€</span>
+            </div>
+            <button class="w-full bg-gradient-to-r from-amber-400 to-red-500 text-black py-4 rounded-2xl hover:from-red-500 hover:to-amber-400 transition-all duration-300 font-bold text-lg hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/25">
+                Finaliser la commande
+            </button>
+        </div>
+    </div>
+
+    <footer class="relative py-20 mt-20">
+        <div class="absolute inset-0 bg-gradient-to-t from-red-900/20 to-transparent"></div>
+        <div class="relative max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <div class="flex items-center justify-center space-x-3 mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-12 w-12 text-amber-400"><path d="M11 22h2c3.31 0 6-2.69 6-6v-3a4 4 0 0 0-4-4h-2V7.5a2.5 2.5 0 0 1 5 0V6"/><path d="M11 15V9.5a2.5 2.5 0 0 0-5 0V15"/><path d="M2 22h2c3.31 0 6-2.69 6-6v-3a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v3c0 3.31 2.69 6 6 6z"/><path d="M12 2L12 6"/></svg>
+                    <span class="text-4xl font-black bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">
+                        VINOTHÈQUE
+                    </span>
+                </div>
+                <p class="text-xl text-white/70 max-w-2xl mx-auto">
+                    L'art de vivre français dans chaque bouteille
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+                <div class="text-center">
+                    <h3 class="text-xl font-bold text-white mb-4">Terroirs d'Exception</h3>
+                    <ul class="space-y-2 text-white/60">
+                        <li>Bordeaux</li>
+                        <li>Bourgogne</li>
+                        <li>Champagne</li>
+                        <li>Loire</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center">
+                    <h3 class="text-xl font-bold text-white mb-4">Services</h3>
+                    <ul class="space-y-2 text-white/60">
+                        <li>Conseil personnalisé</li>
+                        <li>Livraison premium</li>
+                        <li>Cave virtuelle</li>
+                        <li>Dégustations privées</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center">
+                    <h3 class="text-xl font-bold text-white mb-4">Contact</h3>
+                    <div class="space-y-2 text-white/60">
+                        <p>contact@vinotheque.fr</p>
+                        <p>+33 1 11 11 11 11</p>
+                        <p>Paris • Rouen • Bordeaux</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center pt-8 border-t border-white/10">
+                <p class="text-white/50">
+                    © 2025 Vinothèque. L'abus d'alcool est dangereux pour la santé.
+                </p>
+            </div>
+        </div>
+    </footer>
+    <script src="/js/script.js"></script>
+</body>
+</html>
